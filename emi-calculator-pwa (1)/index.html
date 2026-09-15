@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#a31621">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vehicle Loan &amp; EMI Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #fbf5ea;
+    --panel: #ffffff;
+    --line: #ecdfc7;
+    --ink: #241b15;
+    --ink-soft: #7a6a57;
+    --crimson: #a31621;
+    --crimson-soft: #fbe8ea;
+    --gold: #c9a227;
+    --gold-soft: #f7ecc9;
+    --rust: #b5541d;
+    --green: #147a5c;
+    --alert: #c23b3b;
+    --alert-soft: #fbecec;
+    --tata-blue: #0a4b8c;
+    --tata-yellow: #ffc700;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--bg);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    position: relative;
+  }
+  .mono{ font-family: "IBM Plex Mono", monospace; }
+
+  .brand-bar{
+    background: var(--tata-blue);
+    border-bottom: 4px solid var(--tata-yellow);
+    padding: 14px 24px;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+  }
+  .brand-tata{
+    font-family: "Oswald", sans-serif;
+    font-weight: 700;
+    font-size: 21px;
+    letter-spacing: 0.05em;
+    color: #ffffff;
+  }
+  .brand-capital{
+    font-family: "Oswald", sans-serif;
+    font-weight: 700;
+    font-size: 21px;
+    letter-spacing: 0.05em;
+    color: var(--tata-yellow);
+    margin-left: 8px;
+  }
+
+  .disclaimer{
+    text-align: center;
+    color: var(--alert);
+    font-family: "Oswald", sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    padding: 9px 16px;
+    background: var(--alert-soft);
+    border-bottom: 1px solid var(--line);
+    position: relative;
+    z-index: 2;
+  }
+
+  /* --- Bike watermark (mobile only) --- */
+  .bike-bg{
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .bike-bg svg{
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 155%;
+    max-width: 720px;
+    color: var(--crimson);
+    opacity: 0.09;
+  }
+  @media (max-width: 640px){
+    .bike-bg{ display: block; }
+  }
+
+  .wrap{
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 48px 24px 100px;
+    position: relative;
+    z-index: 1;
+  }
+
+  header{ margin-bottom: 24px; }
+  h1{
+    font-family: "Oswald", system-ui, sans-serif;
+    font-size: clamp(26px, 4vw, 36px);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    margin: 0 0 8px;
+    color: var(--crimson);
+  }
+  .by-line{
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: 0.5em;
+    font-weight: 600;
+    color: var(--gold);
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .sub{
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin: 0;
+    max-width: 60ch;
+    line-height: 1.5;
+  }
+
+  .layout{
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 22px;
+    align-items: start;
+  }
+
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 22px;
+  }
+
+  /* --- Inputs --- */
+  .field{ margin-bottom: 16px; }
+  .field label{
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .field .hint{
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-top: 5px;
+    line-height: 1.4;
+  }
+  .input-wrap{
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  .input-wrap .prefix{
+    padding: 10px 10px 10px 12px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .input-wrap input{
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 10px 12px 10px 0;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 14.5px;
+    color: var(--ink);
+    width: 100%;
+  }
+  .input-wrap:focus-within{
+    border-color: var(--crimson);
+    background: #fff;
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+  input[type="number"]{ -moz-appearance:textfield; }
+
+  .roi-row{ display:flex; align-items:center; gap:10px; }
+  input[type="range"]{
+    flex: 1;
+    accent-color: var(--crimson);
+  }
+  .roi-val{
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 14px;
+    font-weight: 600;
+    min-width: 46px;
+    text-align: right;
+  }
+
+  details.advanced{
+    margin-top: 18px;
+    border-top: 1px solid var(--line);
+    padding-top: 14px;
+  }
+  details.advanced summary{
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--crimson);
+    cursor: pointer;
+    list-style: none;
+  }
+  details.advanced summary::-webkit-details-marker{ display:none; }
+  details.advanced summary::before{
+    content: "\25B8  ";
+  }
+  details.advanced[open] summary::before{
+    content: "\25BE  ";
+  }
+  .adv-grid{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 14px;
+  }
+  .adv-grid .field{ margin-bottom: 0; }
+  .adv-grid .field label{ font-size: 11px; }
+  .adv-grid .input-wrap input{ font-size: 13px; padding: 8px 10px 8px 0; }
+  .adv-grid .input-wrap .prefix{ padding: 8px 8px 8px 10px; font-size: 12px; }
+  .adv-note{
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-top: 12px;
+    line-height: 1.5;
+  }
+
+  .reset-link{
+    margin-top: 16px;
+    background: none;
+    border: none;
+    font-size: 12px;
+    color: var(--ink-soft);
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  /* --- Results column --- */
+  .results{ display: flex; flex-direction: column; gap: 18px; }
+
+  .emi-hero{
+    background: linear-gradient(135deg, #7a0f18 0%, var(--crimson) 55%, #2a1210 100%);
+    border-radius: 16px;
+    border-bottom: 4px solid var(--gold);
+    padding: 28px 30px;
+    color: #fff;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin-bottom: 24px;
+    box-shadow: 0 18px 40px -20px rgba(163,22,33,0.55);
+  }
+  .emi-hero .label{
+    font-family: "Oswald", sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--gold);
+    margin: 0 0 6px;
+  }
+  .emi-hero .figure{
+    font-family: "IBM Plex Mono", monospace;
+    font-size: clamp(34px, 6vw, 50px);
+    font-weight: 600;
+  }
+
+  .breakdown-grid{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    align-items: start;
+  }
+
+  .panel-title{
+    font-family: "Oswald", sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    margin: 0 0 4px;
+  }
+  .panel-sub{
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    margin: 0 0 12px;
+  }
+
+  details.collapsible{ cursor: default; }
+  details.collapsible summary{
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  details.collapsible summary::-webkit-details-marker{ display:none; }
+  details.collapsible summary::before{
+    content: "\25B8";
+    color: var(--crimson);
+    font-size: 13px;
+  }
+  details.collapsible[open] summary::before{
+    content: "\25BE";
+  }
+  details.collapsible .panel-sub{ margin-top: 10px; }
+
+  .line{
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 13.5px;
+    gap: 10px;
+  }
+  .line:last-child{ border-bottom: none; }
+  .line span:first-child{ color: var(--ink-soft); }
+  .line span:last-child{ font-family: "IBM Plex Mono", monospace; text-align: right; white-space: nowrap; }
+  .line.total{
+    border-top: 1.5px solid var(--ink);
+    margin-top: 4px;
+    padding-top: 10px;
+    font-weight: 600;
+  }
+  .line.total span:last-child{ font-size: 15px; }
+  .line.note span:first-child{ font-style: italic; font-size: 12px; }
+  .line.note span:last-child{ color: var(--ink-soft); font-size: 12.5px; }
+
+  .badge{
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-left: 6px;
+  }
+  .badge.amber{ background: var(--gold-soft); color: #6b530b; }
+
+  .totals-strip{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .totals-strip .stat{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .totals-strip .stat .label{ font-size: 11.5px; color: var(--ink-soft); margin-bottom: 6px; }
+  .totals-strip .stat .value{ font-family:"IBM Plex Mono", monospace; font-size: 19px; font-weight: 600; }
+  .totals-strip .stat.principal .value{ color: var(--crimson); }
+  .totals-strip .stat.interest .value{ color: var(--rust); }
+  .totals-strip .stat.payment .value{ color: var(--green); }
+
+  .schedule-toggle{
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 10px 16px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    align-self: flex-start;
+  }
+  .schedule-toggle:hover{ border-color: var(--crimson); color: var(--crimson); }
+
+  .schedule-wrap{ overflow-x: auto; }
+  table.schedule{
+    width: 100%;
+    border-collapse: collapse;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12.5px;
+  }
+  table.schedule th{
+    text-align: right;
+    font-family: "Oswald", sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--ink-soft);
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--ink);
+    white-space: nowrap;
+  }
+  table.schedule th:first-child, table.schedule td:first-child{ text-align: left; }
+  table.schedule td{
+    text-align: right;
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+
+  .warn{
+    background: var(--alert-soft);
+    color: var(--alert);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+
+  @media (max-width: 860px){
+    .layout{ grid-template-columns: 1fr; }
+    .breakdown-grid{ grid-template-columns: 1fr; }
+    .totals-strip{ grid-template-columns: 1fr; }
+    .adv-grid{ grid-template-columns: 1fr; }
+  }
+
+  :focus-visible{ outline: 2px solid var(--crimson); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce){ *{ transition:none !important; } }
+</style>
+</head>
+<body>
+
+<div class="brand-bar">
+  <span class="brand-tata">TATA</span><span class="brand-capital">CAPITAL</span>
+</div>
+
+<div class="disclaimer">This is not an official Tata Capital calculator</div>
+
+<div class="bike-bg" aria-hidden="true">
+  <svg viewBox="0 0 900 420" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="190" cy="300" r="86" />
+      <circle cx="190" cy="300" r="44" />
+      <circle cx="690" cy="300" r="86" />
+      <circle cx="690" cy="300" r="44" />
+      <g stroke-width="3">
+        <line x1="190" y1="214" x2="190" y2="386" />
+        <line x1="104" y1="300" x2="276" y2="300" />
+        <line x1="129" y1="239" x2="251" y2="361" />
+        <line x1="129" y1="361" x2="251" y2="239" />
+        <line x1="690" y1="214" x2="690" y2="386" />
+        <line x1="604" y1="300" x2="776" y2="300" />
+        <line x1="629" y1="239" x2="751" y2="361" />
+        <line x1="629" y1="361" x2="751" y2="239" />
+      </g>
+      <path d="M190 300 L 250 170 L 360 150 Q 430 145 470 175 L 560 220 L 620 240 Q 660 255 690 300" />
+      <path d="M250 170 Q 300 130 370 128 Q 430 126 460 150" fill="currentColor" fill-opacity="0.5" />
+      <path d="M470 175 Q 520 165 560 190 L 560 220 Q 520 205 480 205 Z" fill="currentColor" fill-opacity="0.5" />
+      <circle cx="238" cy="176" r="26" />
+      <path d="M238 150 L 210 120" />
+      <path d="M250 170 L 300 260 L 470 260" stroke-width="10" />
+      <path d="M560 230 Q 640 235 680 300" stroke-width="10" />
+    </g>
+  </svg>
+</div>
+
+<div class="wrap">
+
+  <header>
+    <h1>Vehicle loan &amp; EMI calculator <span class="by-line">by Sanjeev</span></h1>
+    <p class="sub">Enter the on-road price, down payment and rate of interest. Processing fee, PDD, insurance and document charges are applied automatically to work out the financed loan amount and monthly EMI.</p>
+  </header>
+
+  <div id="warnBox"></div>
+
+  <div class="emi-hero">
+    <div>
+      <p class="label">Monthly EMI</p>
+      <p class="figure" id="emiFigure">&#8377;0</p>
+    </div>
+  </div>
+
+  <div class="layout">
+
+    <!-- LEFT: INPUTS -->
+    <div class="card">
+      <div class="field">
+        <label for="onRoad">Vehicle on-road price</label>
+        <div class="input-wrap">
+          <span class="prefix">&#8377;</span>
+          <input type="number" id="onRoad" value="280702" min="0" step="1">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="downPayment">Down payment</label>
+        <div class="input-wrap">
+          <span class="prefix">&#8377;</span>
+          <input type="number" id="downPayment" value="50000" min="0" step="1">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="roi">Rate of interest (IRR, reducing)</label>
+        <div class="roi-row">
+          <input type="range" id="roiRange" min="1" max="30" step="0.05" value="17">
+          <span class="roi-val"><span id="roiVal">17</span>%</span>
+        </div>
+        <div class="input-wrap" style="margin-top:8px;">
+          <input type="number" id="roi" value="17" min="0" step="0.05">
+          <span class="prefix">%</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="tenure">Loan tenure</label>
+        <div class="input-wrap">
+          <input type="number" id="tenure" value="36" min="1" step="1">
+          <span class="prefix">months</span>
+        </div>
+        <p class="hint">Not part of your original spec &#8212; added since EMI can't be worked out without a tenure. Adjust freely.</p>
+      </div>
+
+      <details class="advanced">
+        <summary>Advanced &#8212; fees &amp; charges</summary>
+        <div class="adv-grid">
+          <div class="field">
+            <label for="procFeePct">Processing fee</label>
+            <div class="input-wrap"><input type="number" id="procFeePct" value="2" step="0.01"><span class="prefix">%</span></div>
+          </div>
+          <div class="field">
+            <label for="pdd">PDD charges</label>
+            <div class="input-wrap"><span class="prefix">&#8377;</span><input type="number" id="pdd" value="590" step="1"></div>
+          </div>
+          <div class="field">
+            <label for="stampDuty">Stamp duty</label>
+            <div class="input-wrap"><span class="prefix">&#8377;</span><input type="number" id="stampDuty" value="1100" step="1"></div>
+          </div>
+          <div class="field">
+            <label for="tataAig">TATA AIG</label>
+            <div class="input-wrap"><span class="prefix">&#8377;</span><input type="number" id="tataAig" value="1250" step="1"></div>
+          </div>
+          <div class="field">
+            <label for="docCharges">Document charges</label>
+            <div class="input-wrap"><span class="prefix">&#8377;</span><input type="number" id="docCharges" value="751" step="1"></div>
+          </div>
+          <div class="field"></div>
+          <div class="field">
+            <label for="hdfcTier1">HDFC Life &#8212; up to &#8377;1 lac</label>
+            <div class="input-wrap"><span class="prefix">&#8377;</span><input type="number" id="hdfcTier1" value="1410" step="1"></div>
+          </div>
+          <div class="field">
+            <label for="hdfcTier2">HDFC Life &#8212; &#8377;1&#8211;1.5 lac</label>
+            <div class="input-wrap"><span class="prefix">&#8377;</span><input type="number" id="hdfcTier2" value="2115" step="1"></div>
+          </div>
+          <div class="field">
+            <label for="hdfcTier3">HDFC Life &#8212; above &#8377;1.5 lac</label>
+            <div class="input-wrap"><span class="prefix">&#8377;</span><input type="number" id="hdfcTier3" value="2820" step="1"></div>
+          </div>
+        </div>
+        <p class="adv-note">Stamp duty is now added into the financed loan amount along with processing fee and PDD. Uncheck below if you ever want it paid separately by the customer instead.</p>
+        <label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-size:12px; color:var(--ink-soft); cursor:pointer;">
+          <input type="checkbox" id="financeStampDuty" checked> Finance stamp duty into the loan amount
+        </label>
+      </details>
+
+      <button class="reset-link" id="resetBtn" type="button">Reset to defaults</button>
+    </div>
+
+    <!-- RIGHT: RESULTS -->
+    <div class="results">
+
+      <div class="breakdown-grid">
+        <details class="card collapsible">
+          <summary class="panel-title">Loan amount build-up</summary>
+          <p class="panel-sub">On-road price to financed loan amount</p>
+          <div class="line"><span>Vehicle on-road price</span><span id="lOnRoad">&#8377;0</span></div>
+          <div class="line"><span>Down payment</span><span id="lDown">&#8722;&#8377;0</span></div>
+          <div class="line"><span>Base loan amount</span><span id="lBase">&#8377;0</span></div>
+          <div class="line"><span>Processing fee (<span id="lProcPct">2</span>%)</span><span id="lProcFee">&#8377;0</span></div>
+          <div class="line"><span>GST on processing fee (18%)</span><span id="lGst">&#8377;0</span></div>
+          <div class="line"><span>PDD charges</span><span id="lPdd">&#8377;0</span></div>
+          <div class="line" id="stampDutyLine"><span id="stampDutyLabel">Stamp duty</span><span id="lStamp">&#8377;0</span></div>
+          <div class="line"><span>Request loan amount</span><span id="lRequest">&#8377;0</span></div>
+          <div class="line total"><span>Rounded loan amount<span class="badge amber">next round figure</span></span><span id="lRounded">&#8377;0</span></div>
+        </details>
+
+        <details class="card collapsible">
+          <summary class="panel-title">EMI principal build-up</summary>
+          <p class="panel-sub">Rounded loan amount to final EMI principal</p>
+          <div class="line"><span>Rounded loan amount</span><span id="eRounded">&#8377;0</span></div>
+          <div class="line"><span>TATA AIG</span><span id="eTataAig">&#8377;0</span></div>
+          <div class="line"><span>Document charges</span><span id="eDoc">&#8377;0</span></div>
+          <div class="line"><span>HDFC Life Insurance <span class="badge amber" id="hdfcTierBadge">tier</span></span><span id="eHdfc">&#8377;0</span></div>
+          <div class="line total"><span>Final EMI principal</span><span id="eFinal">&#8377;0</span></div>
+        </details>
+      </div>
+
+      <div class="totals-strip">
+        <div class="stat principal">
+          <div class="label">EMI principal</div>
+          <div class="value" id="statPrincipal">&#8377;0</div>
+        </div>
+        <div class="stat interest">
+          <div class="label">Total interest</div>
+          <div class="value" id="statInterest">&#8377;0</div>
+        </div>
+        <div class="stat payment">
+          <div class="label">Total payment</div>
+          <div class="value" id="statPayment">&#8377;0</div>
+        </div>
+      </div>
+
+      <button class="schedule-toggle" id="scheduleToggle" type="button">Show month-by-month schedule</button>
+      <div class="card schedule-wrap" id="scheduleCard" style="display:none;">
+        <table class="schedule" id="scheduleTable">
+          <thead>
+            <tr><th>Month</th><th>Opening</th><th>EMI</th><th>Interest</th><th>Principal</th><th>Closing</th></tr>
+          </thead>
+          <tbody id="scheduleBody"></tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var ids = ["onRoad","downPayment","roi","tenure","procFeePct","pdd","stampDuty","tataAig","docCharges","hdfcTier1","hdfcTier2","hdfcTier3","financeStampDuty"];
+  var els = {};
+  ids.forEach(function(id){ els[id] = document.getElementById(id); });
+
+  var roiRange = document.getElementById("roiRange");
+  var roiVal = document.getElementById("roiVal");
+
+  function num(el){ var v = parseFloat(el.value); return isNaN(v) ? 0 : v; }
+
+  function fmt(n){
+    var num = Math.round((Number(n) || 0) * 100) / 100;
+    var neg = num < 0;
+    num = Math.abs(num);
+    var parts = num.toFixed(2).split(".");
+    var intPart = parts[0];
+    var dec = parts[1];
+    var lastThree = intPart.slice(-3);
+    var rest = intPart.slice(0, -3);
+    if(rest !== "") lastThree = "," + lastThree;
+    var formattedInt = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree;
+    var out = "\u20B9" + formattedInt + (dec === "00" ? "" : "." + dec);
+    return (neg ? "\u2212" : "") + out;
+  }
+
+  function fmtInt(n){
+    var num = Math.round(Number(n) || 0);
+    var neg = num < 0;
+    num = Math.abs(num);
+    var s = num.toString();
+    var lastThree = s.slice(-3);
+    var rest = s.slice(0, -3);
+    if(rest !== "") lastThree = "," + lastThree;
+    var formatted = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree;
+    return (neg ? "\u2212" : "") + "\u20B9" + formatted;
+  }
+
+  function set(id, text){ document.getElementById(id).textContent = text; }
+
+  function compute(){
+    var onRoad = num(els.onRoad);
+    var down = num(els.downPayment);
+    var roi = num(els.roi);
+    var tenure = Math.max(1, Math.round(num(els.tenure)));
+    var procPct = num(els.procFeePct);
+    var pdd = num(els.pdd);
+    var stampDuty = num(els.stampDuty);
+    var tataAig = num(els.tataAig);
+    var docCharges = num(els.docCharges);
+    var hdfc1 = num(els.hdfcTier1);
+    var hdfc2 = num(els.hdfcTier2);
+    var hdfc3 = num(els.hdfcTier3);
+    var financeStamp = els.financeStampDuty.checked;
+
+    var warnBox = document.getElementById("warnBox");
+    warnBox.innerHTML = "";
+    if(down > onRoad){
+      warnBox.innerHTML = '<div class="warn">Down payment is greater than the on-road price &#8212; the base loan amount is being treated as &#8377;0.</div>';
+    }
+
+    var base = Math.max(0, onRoad - down);
+    var procFee = base * (procPct / 100);
+    var GST_RATE = 18;
+    var gstOnProcFee = procFee * (GST_RATE / 100);
+    var stampAdd = financeStamp ? stampDuty : 0;
+    var requestRaw = base + procFee + gstOnProcFee + pdd + stampAdd;
+    var rounded = Math.ceil(requestRaw / 1000) * 1000;
+
+    var hdfcAmount, hdfcLabel;
+    if(rounded <= 100000){ hdfcAmount = hdfc1; hdfcLabel = "up to \u20B91 lac"; }
+    else if(rounded <= 150000){ hdfcAmount = hdfc2; hdfcLabel = "\u20B91\u20131.5 lac"; }
+    else { hdfcAmount = hdfc3; hdfcLabel = "above \u20B91.5 lac"; }
+
+    var finalPrincipal = rounded + tataAig + docCharges + hdfcAmount;
+
+    var r = (roi / 12) / 100;
+    var n = tenure;
+    var emi;
+    if(r === 0){
+      emi = finalPrincipal / n;
+    } else {
+      var factor = Math.pow(1 + r, n);
+      emi = finalPrincipal * r * factor / (factor - 1);
+    }
+    var totalPayment = emi * n;
+    var totalInterest = totalPayment - finalPrincipal;
+
+    // --- Update loan build-up panel ---
+    set("lOnRoad", fmt(onRoad));
+    set("lDown", "\u2212" + fmt(down));
+    set("lBase", fmt(base));
+    set("lProcPct", procPct);
+    set("lProcFee", fmt(procFee));
+    set("lGst", fmt(gstOnProcFee));
+    set("lPdd", fmt(pdd));
+    document.getElementById("stampDutyLabel").textContent = financeStamp ? "Stamp duty" : "Stamp duty (paid separately)";
+    set("lStamp", fmt(stampDuty));
+    set("lRequest", fmt(requestRaw));
+    set("lRounded", fmtInt(rounded));
+
+    // --- Update EMI principal panel ---
+    set("eRounded", fmtInt(rounded));
+    set("eTataAig", fmt(tataAig));
+    set("eDoc", fmt(docCharges));
+    set("hdfcTierBadge", hdfcLabel);
+    set("eHdfc", fmt(hdfcAmount));
+    set("eFinal", fmtInt(finalPrincipal));
+
+    // --- Hero + totals ---
+    set("emiFigure", fmt(Math.round(emi)));
+    set("statPrincipal", fmtInt(finalPrincipal));
+    set("statInterest", fmt(Math.round(totalInterest)));
+    set("statPayment", fmt(Math.round(totalPayment)));
+
+    buildSchedule(finalPrincipal, r, n, emi);
+  }
+
+  function buildSchedule(principal, r, n, emi){
+    var body = document.getElementById("scheduleBody");
+    body.innerHTML = "";
+    var balance = principal;
+    for(var m = 1; m <= n; m++){
+      var interest = r === 0 ? 0 : balance * r;
+      var principalPaid = emi - interest;
+      var closing = Math.max(0, balance - principalPaid);
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td>" + m + "</td>" +
+        "<td>" + fmt(balance) + "</td>" +
+        "<td>" + fmt(emi) + "</td>" +
+        "<td>" + fmt(interest) + "</td>" +
+        "<td>" + fmt(principalPaid) + "</td>" +
+        "<td>" + fmt(closing) + "</td>";
+      body.appendChild(tr);
+      balance = closing;
+    }
+  }
+
+  ids.forEach(function(id){
+    var el = els[id];
+    var evt = el.type === "checkbox" ? "change" : "input";
+    el.addEventListener(evt, function(){
+      if(id === "roi"){ roiRange.value = num(el); roiVal.textContent = num(el); }
+      compute();
+    });
+  });
+
+  roiRange.addEventListener("input", function(){
+    els.roi.value = roiRange.value;
+    roiVal.textContent = roiRange.value;
+    compute();
+  });
+
+  document.getElementById("scheduleToggle").addEventListener("click", function(){
+    var card = document.getElementById("scheduleCard");
+    var showing = card.style.display !== "none";
+    card.style.display = showing ? "none" : "block";
+    this.textContent = showing ? "Show month-by-month schedule" : "Hide month-by-month schedule";
+  });
+
+  var DEFAULTS = {
+    onRoad: 280702, downPayment: 50000, roi: 17, tenure: 36,
+    procFeePct: 2, pdd: 590, stampDuty: 1100, tataAig: 1250,
+    docCharges: 751, hdfcTier1: 1410, hdfcTier2: 2115, hdfcTier3: 2820
+  };
+  document.getElementById("resetBtn").addEventListener("click", function(){
+    Object.keys(DEFAULTS).forEach(function(id){ els[id].value = DEFAULTS[id]; });
+    els.financeStampDuty.checked = true;
+    roiRange.value = DEFAULTS.roi;
+    roiVal.textContent = DEFAULTS.roi;
+    compute();
+  });
+
+  compute();
+})();
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function(){
+    navigator.serviceWorker.register("service-worker.js").catch(function(){});
+  });
+}
+</script>
+</body>
+</html>
