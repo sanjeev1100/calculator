@@ -527,6 +527,9 @@
           <span class="prefix">months</span>
         </div>
         <p class="hint">Not part of your original spec &#8212; added since EMI can't be worked out without a tenure. Adjust freely.</p>
+        <label for="above60" style="display:flex; align-items:center; gap:8px; margin-top:12px; font-size:13px; font-weight:500; color:var(--ink); cursor:pointer;">
+          <input type="checkbox" id="above60" style="width:16px; height:16px; accent-color:var(--crimson); cursor:pointer;"> Is the customer above 60 years old
+        </label>
       </div>
 
       <details class="advanced">
@@ -635,7 +638,7 @@
 
 <script>
 (function(){
-  var ids = ["onRoad","downPayment","roi","tenure","procFeePct","pdd","stampDuty","tataAig","docCharges","hdfcTier1","hdfcTier2","hdfcTier3","financeStampDuty"];
+  var ids = ["onRoad","downPayment","roi","tenure","procFeePct","pdd","stampDuty","tataAig","docCharges","hdfcTier1","hdfcTier2","hdfcTier3","financeStampDuty","above60"];
   var els = {};
   ids.forEach(function(id){ els[id] = document.getElementById(id); });
 
@@ -687,6 +690,7 @@
     var hdfc2 = num(els.hdfcTier2);
     var hdfc3 = num(els.hdfcTier3);
     var financeStamp = els.financeStampDuty.checked;
+    var isAbove60 = els.above60.checked;
 
     var warnBox = document.getElementById("warnBox");
     warnBox.innerHTML = "";
@@ -698,14 +702,28 @@
     var procFee = base * (procPct / 100);
     var GST_RATE = 18;
     var gstOnProcFee = procFee * (GST_RATE / 100);
+    // Stamp duty is waived when the request loan amount (before stamp duty) is below 84,000
+    var preStamp = base + procFee + gstOnProcFee + pdd;
+    if(preStamp < 84000){ stampDuty = 0; }
     var stampAdd = financeStamp ? stampDuty : 0;
-    var requestRaw = base + procFee + gstOnProcFee + pdd + stampAdd;
+    var requestRaw = preStamp + stampAdd;
     var rounded = Math.ceil(requestRaw / 1000) * 1000;
 
-    var hdfcAmount, hdfcLabel;
-    if(rounded <= 100000){ hdfcAmount = hdfc1; hdfcLabel = "up to \u20B91 lac"; }
-    else if(rounded <= 150000){ hdfcAmount = hdfc2; hdfcLabel = "\u20B91\u20131.5 lac"; }
-    else { hdfcAmount = hdfc3; hdfcLabel = "above \u20B91.5 lac"; }
+    var hdfcAmount = 0;
+    var hdfcLabel = "waived";
+
+    if(!isAbove60){
+      if(rounded <= 100000){
+        hdfcAmount = hdfc1;
+        hdfcLabel = "up to \u20B91 lac";
+      } else if(rounded <= 150000){
+        hdfcAmount = hdfc2;
+        hdfcLabel = "\u20B91\u20131.5 lac";
+      } else {
+        hdfcAmount = hdfc3;
+        hdfcLabel = "above \u20B91.5 lac";
+      }
+    }
 
     var finalPrincipal = rounded + tataAig + docCharges + hdfcAmount;
 
@@ -749,6 +767,35 @@
     set("statPayment", fmt(Math.round(totalPayment)));
 
     buildSchedule(finalPrincipal, r, n, emi);
+    saveState();
+  }
+
+  /* --- Remember the last calculation between app launches --- */
+  var STORE_KEY = "emi-calculator-last-v1";
+
+  function saveState(){
+    try{
+      var data = {};
+      ids.forEach(function(id){
+        data[id] = els[id].type === "checkbox" ? els[id].checked : els[id].value;
+      });
+      localStorage.setItem(STORE_KEY, JSON.stringify(data));
+    }catch(e){}
+  }
+
+  function loadState(){
+    try{
+      var raw = localStorage.getItem(STORE_KEY);
+      if(!raw) return;
+      var data = JSON.parse(raw);
+      ids.forEach(function(id){
+        if(!(id in data)) return;
+        if(els[id].type === "checkbox"){ els[id].checked = !!data[id]; }
+        else { els[id].value = data[id]; }
+      });
+      roiRange.value = num(els.roi);
+      roiVal.textContent = num(els.roi);
+    }catch(e){}
   }
 
   function buildSchedule(principal, r, n, emi){
@@ -802,11 +849,13 @@
   document.getElementById("resetBtn").addEventListener("click", function(){
     Object.keys(DEFAULTS).forEach(function(id){ els[id].value = DEFAULTS[id]; });
     els.financeStampDuty.checked = true;
+    els.above60.checked = false;
     roiRange.value = DEFAULTS.roi;
     roiVal.textContent = DEFAULTS.roi;
     compute();
   });
 
+  loadState();
   compute();
 })();
 </script>
